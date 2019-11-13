@@ -1,23 +1,17 @@
-import * as R from "ramda";
-import SDK from "dat-sdk";
-import cheerio from "cheerio";
-import url from "url";
-import { promisify } from "util";
+import { start, dispatch, stop, spawnStateless } from "nact";
+import { DatArchive } from "dat-sdk/auto";
 
-import {
-	itterateThroughArchives,
-	printDebug,
-	addArchiveByDNS,
-} from "./archivesCollection";
+import createEngine from "./engine";
 
-import { crawlArchive } from "./archiveCrawler";
+const system = start();
 
-async function main() {
-	await addArchiveByDNS(0, "dat://explore.beakerbrowser.com");
+const engine = createEngine(system);
 
-	for await (const { archive, meta } of itterateThroughArchives()) {
-		await crawlArchive(archive, meta);
-	}
-}
+dispatch(engine, {
+	type: "mountDomain",
+	domain: "dat://dat.foundation",
+	hopsRemaining: 3,
+});
 
-main();
+//engine => domainCrawler => folderCrawler => fileCrawler;
+//stop(system);

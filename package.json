@@ -14,18 +14,18 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@babel/cli": "^7.5.5",
-    "@babel/core": "^7.5.5",
+    "@babel/cli": "^7.7.0",
+    "@babel/core": "^7.7.2",
     "@freddieridell/babel-preset": "^0.2.0",
-    "babel-eslint": "^10.0.2",
-    "eslint": "^6.1.0",
-    "eslint-config-react-app": "^4.0.1",
-    "eslint-plugin-flowtype": "^3.12.1",
+    "babel-eslint": "^10.0.3",
+    "eslint": "^6.6.0",
+    "eslint-config-react-app": "^5.0.2",
+    "eslint-plugin-flowtype": "^4.4.1",
     "eslint-plugin-import": "^2.18.2",
     "eslint-plugin-jsx-a11y": "^6.2.3",
-    "eslint-plugin-react": "^7.14.3",
-    "jest-cli": "^24.8.0",
-    "prettier": "^1.18.2"
+    "eslint-plugin-react": "^7.16.0",
+    "jest-cli": "^24.9.0",
+    "prettier": "^1.19.1"
   },
   "babel": {
     "presets": [
@@ -46,8 +46,11 @@
     "useTabs": true
   },
   "dependencies": {
+    "@freddieridell/kebab-case": "0.0.2",
     "cheerio": "^1.0.0-rc.3",
-    "dat-sdk": "^0.1.0",
+    "dat-sdk": "^0.3.6",
+    "nact": "^7.2.1",
+    "node-dat-archive": "^2.2.0",
     "ramda": "^0.26.1"
   }
 }
