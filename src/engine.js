@@ -2,34 +2,50 @@ import { spawn, start, dispatch, stop, spawnStateless } from "nact";
 
 import createDomainCrawler, { createDomainCrawlerName } from "./domainCrawler";
 
-function getOrCreateDomainCrawler(msg, ctx) {
-	return ctx.children.has(createDomainCrawlerName(msg.domain))
-		? ctx.children.get(createDomainCrawlerName(msg.domain))
-		: createDomainCrawler(ctx.self, msg.domain);
+function getOrCreateDomainCrawler(ctx, domain) {
+	return ctx.children.has(createDomainCrawlerName(domain))
+		? ctx.children.get(createDomainCrawlerName(domain))
+		: createDomainCrawler(ctx.self, domain);
 }
 
 export default function createEngine(parent) {
 	return spawnStateless(
 		parent,
-		function(msg, ctx) {
-			console.log(ctx.name, msg.type);
+		(msg, ctx) =>
+			((
+				{
+					foundNewDomain: () => {
+						const domainCrawlerActor = getOrCreateDomainCrawler(
+							ctx,
+							msg.domain,
+						);
 
-			switch (msg.type) {
-				case "mountDomain": {
-					const domainCrawlerActor = getOrCreateDomainCrawler(
-						msg,
-						ctx,
-					);
+						dispatch(
+							domainCrawlerActor,
+							{
+								...msg,
+								type: "mountDomain",
+							},
+							ctx.self,
+						);
 
-					dispatch(domainCrawlerActor, msg, ctx.self);
+						return;
+					},
+					mountDomain: () => {
+						const domainCrawlerActor = getOrCreateDomainCrawler(
+							ctx,
+							msg.domain,
+						);
 
-					return;
-				}
+						dispatch(domainCrawlerActor, msg, ctx.self);
 
-				default:
+						return;
+					},
+				}[msg.type] ||
+				(() => {
 					console.log("invalid msg", ctx.name, msg.type);
-			}
-		},
+				})
+			)()),
 		"engine",
 		{ onCrash: (msg, err) => console.error(msg.type, err) },
 	);

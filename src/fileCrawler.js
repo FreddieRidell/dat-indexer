@@ -8,6 +8,8 @@ import { datUrlRegex } from "./util";
 export const createFileCrawlerName = (domain, file) =>
 	keb(["fileCrawler", domain, file].join("-"));
 
+const urlBlackList = [/^www.w3.org/];
+
 export default function createFileCrawler(parent, archive, domain, file) {
 	return spawn(
 		parent,
@@ -16,9 +18,24 @@ export default function createFileCrawler(parent, archive, domain, file) {
 				case "crawlFile": {
 					const fileString = await archive.readFile(file, "utf8");
 
-					const datUrls = datUrlRegex.match(fileString);
-
-					console.log({ datUrls });
+					const datUrls = fileString.match(datUrlRegex) || [];
+					for (const url of datUrls) {
+						if (
+							!urlBlackList.reduce(
+								(acc, regex) => acc || regex.test(url),
+								false,
+							)
+						) {
+							dispatch(
+								ctx.sender,
+								{
+									type: "foundUrl",
+									url,
+								},
+								ctx.self,
+							);
+						}
+					}
 
 					return state;
 				}

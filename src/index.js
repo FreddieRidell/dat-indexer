@@ -9,7 +9,7 @@ const engine = createEngine(system);
 
 dispatch(engine, {
 	type: "mountDomain",
-	domain: "dat://dat.foundation",
+	domain: "dat://beakerbrowser.com",
 	hopsRemaining: 3,
 });
 
