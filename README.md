@@ -1,10 +1,7 @@
 ## Architecture
 
-Babel now has async generators, which makes this so much easier. We can write functions that lazily produce values and chain them together with iterators.
+Uses actors for each part of the crawling and indexing process.
 
-The aim is initially just to create a crawler that gets a complete list of pages that are a given number of hops from the starting point. After that we can look at performing analasys on those pages and indexing them by title/keywords/common terms. Finally we can look at a page rank style system that ranks the quality of results, but as this is as purposfully limited data set, I'm not sure how useful that will be.
+## TODO
 
-There should probably be global collections for the various things we want to keep track of, and generators that pull from one and push to another. Collections we want to track:
-
--   archives
--   pages
+messages should probably only contain serialisable values and addresses, no passing `Archive`s around. I should maybe create an archive actor that can be used to query the archive, and then just let the other actors contain the logic for calling it.

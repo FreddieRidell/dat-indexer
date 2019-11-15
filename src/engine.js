@@ -1,52 +1,71 @@
-import { spawn, start, dispatch, stop, spawnStateless } from "nact";
+import { query, spawn, start, dispatch, stop, spawnStateless } from "nact";
 
-import createDomainCrawler, { createDomainCrawlerName } from "./domainCrawler";
+import { resolveDatName, createActorDefinition } from "./util";
 
-function getOrCreateDomainCrawler(ctx, domain) {
-	return ctx.children.has(createDomainCrawlerName(domain))
-		? ctx.children.get(createDomainCrawlerName(domain))
-		: createDomainCrawler(ctx.self, domain);
+import summonChildArchiveActor from "./archiveActor";
+import summonChildDomainCrawlerActor from "./domainCrawler";
+
+export function engineNameBuilder() {
+	return "engine";
 }
 
-export default function createEngine(parent) {
-	return spawnStateless(
-		parent,
-		(msg, ctx) =>
-			((
-				{
-					foundNewDomain: () => {
-						const domainCrawlerActor = getOrCreateDomainCrawler(
-							ctx,
-							msg.domain,
-						);
+const initialState = { domains: {} };
 
-						dispatch(
-							domainCrawlerActor,
-							{
-								...msg,
-								type: "mountDomain",
-							},
-							ctx.self,
-						);
+const logic = {
+	mountDomain: async (state, msg, ctx) => {
+		const { domain, hopsRemaining } = msg;
 
-						return;
-					},
-					mountDomain: () => {
-						const domainCrawlerActor = getOrCreateDomainCrawler(
-							ctx,
-							msg.domain,
-						);
+		const archiveKey = await resolveDatName(domain);
 
-						dispatch(domainCrawlerActor, msg, ctx.self);
+		console.log("mountDomain", archiveKey, domain);
 
-						return;
-					},
-				}[msg.type] ||
-				(() => {
-					console.log("invalid msg", ctx.name, msg.type);
-				})
-			)()),
-		"engine",
-		{ onCrash: (msg, err) => console.error(msg.type, err) },
-	);
-}
+		const archiveActor = summonChildArchiveActor(ctx, archiveKey, domain);
+		const domainCrawlerActor = summonChildDomainCrawlerActor(
+			ctx,
+			archiveKey,
+			domain,
+		);
+
+		await query(archiveActor, { type: "mount" }, 60000);
+
+		console.log("mounted dat", archiveKey, domain);
+
+		dispatch(domainCrawlerActor, {
+			type: "provideArchiveActor",
+			archiveActor,
+		});
+
+		dispatch(domainCrawlerActor, {
+			type: "beginCrawlingFromRoot",
+			hopsRemaining,
+		});
+
+		return {
+			...state,
+			domains: {
+				...state.domains,
+				[archiveKey]: Math.max(
+					state.domains[archiveKey] || 0,
+					msg.hopsRemaining || 0,
+				),
+			},
+		};
+	},
+
+	discoveredDatDomain: async (state, msg, ctx) => {
+		if (
+			state.domains[msg.archiveKey] ||
+			state.domains[msg.archiveKey] >= msg.hopsRemaining
+		) {
+			return;
+		}
+
+		dispatch(ctx.self, {
+			type: "mountDomain",
+			domain: msg.domain,
+			hopsRemaining: msg.hopsRemaining,
+		});
+	},
+};
+
+export default createActorDefinition(engineNameBuilder, initialState, logic);

@@ -3,28 +3,14 @@ import url from "url";
 import path from "path";
 import { spawn, start, dispatch, stop, spawnStateless } from "nact";
 
+import { snooze } from "./util";
+
 import createFileCrawler, { createFileCrawlerName } from "./fileCrawler";
 
 function getOrCreateFileCrawler(ctx, archive, domain, file) {
 	return ctx.children.has(createFileCrawlerName(domain, file))
 		? ctx.children.get(createFileCrawlerName(domain, file))
 		: createFileCrawler(ctx.self, archive, domain, file);
-}
-
-function getHostName(a) {
-	return url.parse(a).hostname;
-}
-function areSameArchive(a, b) {
-	return getHostName(a) === getHostName(b);
-}
-async function isValidDatName(name) {
-	try {
-		resolveName(name);
-		return true;
-	} catch (e) {
-		console.log(name, "is not a valid dat name");
-		return false;
-	}
 }
 
 export const createFolderCrawlerName = (domain, folder) =>
@@ -36,25 +22,8 @@ export default function createFolderCrawler(parent, archive, domain, folder) {
 		(msg, ctx) =>
 			((
 				{
-					foundUrl: async () => {
-						const isAValidDatName = isValidDatName(msg.url);
-
-						if (
-							isAValidDatName &&
-							getHostName(msg.url) &&
-							!areSameArchive(msg.url, domain)
-						) {
-							const { hostname } = url.parse(msg.url);
-
-							dispatch(
-								ctx.parent,
-								{
-									type: "foundNewDomain",
-									domain: hostname,
-								},
-								ctx.self,
-							);
-						}
+					foundUrl: () => {
+						dispatch(ctx.parent, msg, msg.sender);
 					},
 
 					crawlFolder: async () => {
@@ -68,6 +37,8 @@ export default function createFolderCrawler(parent, archive, domain, folder) {
 							const stat = await archive.stat(fullFileName);
 
 							if (stat.isDirectory()) {
+								await snooze(2);
+
 								dispatch(
 									ctx.parent,
 									{

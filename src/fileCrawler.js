@@ -3,7 +3,7 @@ import url from "url";
 import path from "path";
 import { spawn, start, dispatch, stop, spawnStateless } from "nact";
 
-import { datUrlRegex } from "./util";
+import { snooze, datUrlRegex } from "./util";
 
 export const createFileCrawlerName = (domain, file) =>
 	keb(["fileCrawler", domain, file].join("-"));
@@ -16,6 +16,8 @@ export default function createFileCrawler(parent, archive, domain, file) {
 		async function(state = {}, msg, ctx) {
 			switch (msg.type) {
 				case "crawlFile": {
+					await snooze();
+
 					const fileString = await archive.readFile(file, "utf8");
 
 					const datUrls = fileString.match(datUrlRegex) || [];
