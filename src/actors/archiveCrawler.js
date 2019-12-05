@@ -108,6 +108,19 @@ export default defineActor(
 				persist: true,
 			});
 
+			archive
+				.readFile("/dat.json", "utf8")
+				.then(safeJSONParse)
+				.then(R.defaultTo({}))
+				.then(({ title, description }) => {
+					console.log(
+						`foundArchiveForCrawling: dat://${msg.hash} (${title}) "${description}"`,
+					);
+				})
+				.catch(() => {
+					console.log(`foundArchiveForCrawling: dat://${msg.hash}`);
+				});
+
 			dispatch(
 				ctx.self,
 				foundFolderForCrawling.create({ folderPath: "/" }),
@@ -120,7 +133,7 @@ export default defineActor(
 		}),
 
 		...foundFolderForCrawling.respond(
-			async ({ archive }, { folderPath }, ctx) => {
+			async ({ archive, hash }, { folderPath }, ctx) => {
 				const fileNames = await archive.readdir(folderPath);
 
 				for (const fileName of fileNames) {
