@@ -104,8 +104,6 @@ export default defineActor(
 				return;
 			}
 
-			console.log("foundArchiveForCrawling", msg.hash);
-
 			const archive = await DatArchive.load(msg.hash, {
 				persist: true,
 			});

@@ -46,6 +46,11 @@ export default defineActor(
 			const hasAlreadyMountedArchive = archiveCrawler.exists(ctx, hash);
 
 			if (!hasAlreadyMountedArchive) {
+				console.log(
+					"foundArchiveForCrawling",
+					hash,
+					state.mapHostnameToHash[hash],
+				);
 				dispatch(
 					archiveCrawler.summon(ctx, hash),
 					foundArchiveForCrawling.create({ hash }),
