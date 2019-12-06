@@ -76,6 +76,9 @@ export function createMessageDefinition(type, factory) {
 		respond: handler => ({
 			[type]: handler,
 		}),
+		handleError: handler => ({
+			[type]: handler,
+		}),
 		forwardUp: () => ({
 			[type]: (_, msg, ctx) => {
 				dispatch(ctx.parent, msg);

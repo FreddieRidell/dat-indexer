@@ -204,4 +204,31 @@ export default defineActor(
 
 		...foundLink.forwardUp(),
 	},
+
+	{
+		...foundJSONForCrawling.handleError(async (msg, err, ctx) => {
+			if (err.notFound) {
+				return ctx.resume;
+			} else {
+				return ctx.escalate;
+			}
+		}),
+		...foundTextForCrawling.handleError(async (msg, err, ctx) => {
+			if (err.notFound) {
+				return ctx.resume;
+			} else {
+				return ctx.escalate;
+			}
+		}),
+		...foundFolderForCrawling.handleError(async (msg, err, ctx) => {
+			if (err.notFound) {
+				return ctx.resume;
+			} else if (err.timedOut) {
+				setTimeout(() => dispatch(ctx.self, msg, ctx.sender), 3000);
+				return ctx.resume;
+			} else {
+				return ctx.escalate;
+			}
+		}),
+	},
 );
