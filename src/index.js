@@ -1,19 +1,14 @@
 import { start, dispatch, stop, spawnStateless } from "nact";
 import { DatArchive } from "dat-sdk/auto";
 
-import createEngine from "./actor/engine";
+import crawler from "./actors/crawler";
+import { foundLink } from "./messages";
 
 const system = start();
 
-const engine = createEngine(system);
+const crawlerInstance = crawler.create(system);
 
-dispatch(engine, {
-	type: "mountActor",
-	rootDomain: "dat://beakerbrowser.com",
-	hops: 3,
-});
-
-dispatch(engine, { type: "beginIndexing" });
-
-//engine => domainCrawler => folderCrawler => fileCrawler;
-//stop(system);
+dispatch(
+	crawlerInstance,
+	foundLink.create({ source: null, sink: "dat://explore.beakerbrowser.com" }),
+);

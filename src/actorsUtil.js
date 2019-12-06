@@ -12,24 +12,17 @@ export function createChildSummoner(nameBuilder, actorCreator) {
 	};
 }
 
-export function createActorDefinition(
-	nameBuilder,
-	initialState,
-	logic,
-	crashLogic = {},
-) {
-	return (parent, ...args) =>
+export function defineActor(nameBuilder, initialState, logic, crashLogic = {}) {
+	const create = (parent, ...args) =>
 		spawn(
 			parent,
 			async (state = initialState, msg, ctx) => {
-				if (msg.type === "mountActor") {
-					return R.mergeLeft(R.dissoc("type", msg), state);
-				}
-
 				const handler = logic[msg.type];
 
 				if (!handler) {
-					console.log(`invalid msg @ "${ctx.name}" => "${msg.type}"`);
+					console.log(
+						`unhandled msg @ "${ctx.name}" => "${msg.type}"`,
+					);
 
 					return state;
 				}
@@ -61,4 +54,32 @@ export function createActorDefinition(
 				},
 			},
 		);
+
+	const summon = createChildSummoner(nameBuilder, create);
+	const exists = (ctx, ...args) => ctx.children.has(nameBuilder(...args));
+	const locate = (ctx, ...args) => ctx.children.get(nameBuilder(...args));
+
+	return {
+		exists,
+		locate,
+		summon,
+		create,
+	};
+}
+
+export function createMessageDefinition(type, factory) {
+	return {
+		create: (...args) => ({
+			type,
+			...factory(...args),
+		}),
+		respond: handler => ({
+			[type]: handler,
+		}),
+		forwardUp: () => ({
+			[type]: (_, msg, ctx) => {
+				dispatch(ctx.parent, msg);
+			},
+		}),
+	};
 }
