@@ -2,6 +2,14 @@ import { query, dispatch } from "nact";
 
 import { createMessageDefinition } from "./actorsUtil";
 
+export const foundLinks = createMessageDefinition(
+	"FOUND_LINKS",
+	({ source, sinks }) => ({
+		source,
+		sinks,
+	}),
+);
+
 export const foundLink = createMessageDefinition(
 	"FOUND_LINK",
 	({ source, sink }) => ({
@@ -50,5 +58,14 @@ export const foundTextForCrawling = createMessageDefinition(
 	"FOUND_TEXT_FOR_CRAWLING",
 	({ filePath }) => ({
 		filePath,
+	}),
+);
+
+export const updatePageRank = createMessageDefinition(
+	"UPDATE_PAGE_RANK",
+	({ page, rankSet, rankAdd }) => ({
+		page,
+		rankSet,
+		rankAdd,
 	}),
 );

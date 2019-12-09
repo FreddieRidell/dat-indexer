@@ -4,11 +4,13 @@ import { dispatch } from "nact";
 
 import dnsActor from "./dns";
 import archiveCrawler from "./archiveCrawler";
+import pageRanks from "./pageRanks";
 
 import { defineActor } from "../actorsUtil";
 
 import {
 	foundArchiveForCrawling,
+	foundLinks,
 	foundLink,
 	requestDNS,
 	resolveDNS,
@@ -20,14 +22,32 @@ export default defineActor(
 	},
 	{},
 	{
+		...foundLinks.respond(async (state, { source, sinks }, ctx) => {
+			for (const sink of sinks) {
+				dispatch(
+					ctx.self,
+					foundLink.create({ source, sink }),
+					ctx.self,
+				);
+			}
+
+			dispatch(
+				pageRanks.summon(ctx),
+				foundLinks.create({
+					source,
+					sinks,
+				}),
+				ctx.self,
+			);
+		}),
 		...foundLink.respond(async (state, { source, sink }, ctx) => {
+			process.stdout.write(".");
 			const { protocol, hostname, pathname } = url.parse(sink);
 
 			if (protocol.includes("dat")) {
 				const sinkHash = R.path(["mapHostnameToHash", hostname], state);
 
-				if (sinkHash) {
-				} else {
+				if (!sinkHash) {
 					dispatch(
 						dnsActor.summon(ctx),
 						requestDNS.create({ hostname }),

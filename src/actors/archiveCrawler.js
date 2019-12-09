@@ -10,7 +10,7 @@ import { defineActor } from "../actorsUtil";
 import {
 	foundFolderForCrawling,
 	foundJSONForCrawling,
-	foundLink,
+	foundLinks,
 	foundArchiveForCrawling,
 	foundTextForCrawling,
 } from "../messages";
@@ -58,6 +58,7 @@ function dispatchFindsFromPartialUrls(
 	{ hash, filePath, ctx },
 	foundPartialUrls,
 ) {
+	let sinks = [];
 	for (const partialUrl of foundPartialUrls) {
 		const { protocol, path, hostname } = url.parse(partialUrl);
 
@@ -78,19 +79,21 @@ function dispatchFindsFromPartialUrls(
 			slashes: true,
 		});
 
-		dispatch(
-			ctx.self,
-			foundLink.create({
-				source: url.format({
-					hostname: hash,
-					protocol: "dat:",
-					pathname: filePathToUrlPath(filePath),
-					slashes: true,
-				}),
-				sink: qualifiedUrl,
-			}),
-		);
+		sinks.push(qualifiedUrl);
 	}
+
+	dispatch(
+		ctx.self,
+		foundLinks.create({
+			source: url.format({
+				hostname: hash,
+				protocol: "dat:",
+				pathname: filePathToUrlPath(filePath),
+				slashes: true,
+			}),
+			sinks,
+		}),
+	);
 }
 
 export default defineActor(
@@ -202,7 +205,7 @@ export default defineActor(
 			},
 		),
 
-		...foundLink.forwardUp(),
+		...foundLinks.forwardUp(),
 	},
 
 	{
