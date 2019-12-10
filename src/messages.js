@@ -4,17 +4,17 @@ import { createMessageDefinition } from "./actorsUtil";
 
 export const foundLinks = createMessageDefinition(
 	"FOUND_LINKS",
-	({ source, sinks }) => ({
-		source,
-		sinks,
+	({ sourceUrl, sinkUrls }) => ({
+		sourceUrl,
+		sinkUrls,
 	}),
 );
 
 export const foundLink = createMessageDefinition(
 	"FOUND_LINK",
-	({ source, sink }) => ({
-		source,
-		sink,
+	({ sourceUrl, sinkUrl }) => ({
+		sourceUrl,
+		sinkUrl,
 	}),
 );
 
@@ -27,7 +27,8 @@ export const requestDNS = createMessageDefinition(
 
 export const resolveDNS = createMessageDefinition(
 	"RESOLVE_DNS",
-	({ hostname, hash }) => ({
+	({ hostname, hash, success }) => ({
+		success,
 		hostname,
 		hash,
 	}),
@@ -40,24 +41,11 @@ export const foundArchiveForCrawling = createMessageDefinition(
 	}),
 );
 
-export const foundFolderForCrawling = createMessageDefinition(
-	"FOUND_FOLDER_FOR_CRAWLING",
-	({ folderPath }) => ({
-		folderPath,
-	}),
-);
-
-export const foundJSONForCrawling = createMessageDefinition(
-	"FOUND_JSON_FOR_CRAWLING",
-	({ filePath }) => ({
-		filePath,
-	}),
-);
-
-export const foundTextForCrawling = createMessageDefinition(
-	"FOUND_TEXT_FOR_CRAWLING",
-	({ filePath }) => ({
-		filePath,
+export const foundArchivePageForCrawling = createMessageDefinition(
+	"FOUND_ARCHIVE_PAGE_FOR_CRAWLING",
+	({ hash, path }) => ({
+		hash,
+		path,
 	}),
 );
 

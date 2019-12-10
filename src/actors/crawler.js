@@ -1,6 +1,6 @@
 import R from "ramda";
 import url from "url";
-import { dispatch } from "nact";
+import { dispatch, query } from "nact";
 
 import dnsActor from "./dns";
 import archiveCrawler from "./archiveCrawler";
@@ -10,6 +10,7 @@ import { defineActor } from "../actorsUtil";
 
 import {
 	foundArchiveForCrawling,
+	foundArchivePageForCrawling,
 	foundLinks,
 	foundLink,
 	requestDNS,
@@ -22,53 +23,42 @@ export default defineActor(
 	},
 	{},
 	{
-		...foundLinks.respond(async (state, { source, sinks }, ctx) => {
-			for (const sink of sinks) {
+		...foundLinks.respond(async (state, { sourceUrl, sinkUrls }, ctx) => {
+			for (const sinkUrl of sinkUrls) {
 				dispatch(
 					ctx.self,
-					foundLink.create({ source, sink }),
-					ctx.self,
+					foundLink.create({
+						sourceUrl,
+						sinkUrl,
+					}),
 				);
 			}
+		}),
+		...foundLink.respond(async (state, { sinkUrl, sourceUrl }, ctx) => {
+			console.log(sourceUrl, "=>", sinkUrl);
 
-			dispatch(
-				pageRanks.summon(ctx),
-				foundLinks.create({
-					source,
-					sinks,
-				}),
-				ctx.self,
+			const { hostname: sinkHostname, path: sinkPath } = url.parse(
+				sinkUrl,
 			);
-		}),
-		...foundLink.respond(async (state, { source, sink }, ctx) => {
-			process.stdout.write(".");
-			const { protocol, hostname, pathname } = url.parse(sink);
 
-			if (protocol.includes("dat")) {
-				const sinkHash = R.path(["mapHostnameToHash", hostname], state);
+			const sinkDnsLookup = await query(
+				dnsActor.summon(ctx),
+				requestDNS.create({
+					hostname: sinkHostname,
+				}),
+				10000,
+			);
 
-				if (!sinkHash) {
-					dispatch(
-						dnsActor.summon(ctx),
-						requestDNS.create({ hostname }),
-						ctx.self,
-					);
-				}
-			}
-		}),
+			if (sinkDnsLookup.success) {
+				// the link points to a dat archive
+				const { hash: sinkHash } = sinkDnsLookup;
 
-		...resolveDNS.respond(async (state, { hostname, hash }, ctx) => {
-			dispatch(ctx.self, foundArchiveForCrawling.create({ hash }));
-			return R.assocPath(["mapHostnameToHash", hostname], hash);
-		}),
-
-		...foundArchiveForCrawling.respond(async (state, { hash }, ctx) => {
-			const hasAlreadyMountedArchive = archiveCrawler.exists(ctx, hash);
-
-			if (!hasAlreadyMountedArchive) {
 				dispatch(
-					archiveCrawler.summon(ctx, hash),
-					foundArchiveForCrawling.create({ hash }),
+					archiveCrawler.summon(ctx, sinkHash),
+					foundArchivePageForCrawling.create({
+						hash: sinkHash,
+						path: sinkPath,
+					}),
 					ctx.self,
 				);
 			}
