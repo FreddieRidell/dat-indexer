@@ -23,38 +23,26 @@ export default defineActor(
 	},
 	{},
 	{
-		...requestDNS.respond(async (state, { hostname }, ctx) => {
-			const cachedHash = state[hostname];
+		...requestDNS.respond(async (state, { host, responseMsg }, ctx) => {
+			const cachedHash = state[host];
 
 			const hash = await (cachedHash === undefined
-				? resolveDatName(hostname)
+				? resolveDatName(host)
 				: Promise.resolve(cachedHash));
 
 			if (hash) {
 				dispatch(
 					ctx.sender,
-					resolveDNS.create({
-						success: true,
-						hostname,
+					{
+						...responseMsg,
 						hash,
-					}),
+						host,
+					},
 					ctx.self,
 				);
-
-				return R.assoc(hostname, hash);
-			} else {
-				dispatch(
-					ctx.sender,
-					resolveDNS.create({
-						success: false,
-						hostname,
-						hash: null,
-					}),
-					ctx.self,
-				);
-
-				return R.assoc(hostname, false);
 			}
+
+			return R.assoc(host, hash);
 		}),
 	},
 );

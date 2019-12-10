@@ -9,9 +9,7 @@ import pageRanks from "./pageRanks";
 import { defineActor } from "../actorsUtil";
 
 import {
-	foundArchiveForCrawling,
 	foundArchivePageForCrawling,
-	foundLinks,
 	foundLink,
 	requestDNS,
 	resolveDNS,
@@ -23,45 +21,38 @@ export default defineActor(
 	},
 	{},
 	{
-		...foundLinks.respond(async (state, { sourceUrl, sinkUrls }, ctx) => {
-			for (const sinkUrl of sinkUrls) {
-				dispatch(
-					ctx.self,
-					foundLink.create({
-						sourceUrl,
-						sinkUrl,
-					}),
-				);
-			}
-		}),
-		...foundLink.respond(async (state, { sinkUrl, sourceUrl }, ctx) => {
-			console.log(sourceUrl, "=>", sinkUrl);
-
-			const { hostname: sinkHostname, path: sinkPath } = url.parse(
-				sinkUrl,
-			);
-
-			const sinkDnsLookup = await query(
+		...foundLink.respond(async (state, { sink, source }, ctx) => {
+			dispatch(
 				dnsActor.summon(ctx),
 				requestDNS.create({
-					hostname: sinkHostname,
+					host: sink.host,
+					responseMsg: foundArchivePageForCrawling.create({
+						host: null,
+						hash: null,
+						path: sink.path,
+					}),
 				}),
-				10000,
+				ctx.self,
 			);
+		}),
 
-			if (sinkDnsLookup.success) {
-				// the link points to a dat archive
-				const { hash: sinkHash } = sinkDnsLookup;
+		...foundArchivePageForCrawling.respond(
+			async (state, { host, hash, path }, ctx) => {
+				console.log(
+					"foundArchivePageForCrawling",
+					`${hash}${path} \t (${host})`,
+				);
 
 				dispatch(
-					archiveCrawler.summon(ctx, sinkHash),
+					archiveCrawler.summon(ctx, hash),
 					foundArchivePageForCrawling.create({
-						hash: sinkHash,
-						path: sinkPath,
+						host,
+						hash,
+						path,
 					}),
 					ctx.self,
 				);
-			}
-		}),
+			},
+		),
 	},
 );

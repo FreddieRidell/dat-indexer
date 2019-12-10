@@ -17,39 +17,5 @@ export default defineActor(
 	{
 		null: START,
 	},
-	{
-		...updatePageRank.respond(
-			async (state, { page, rankSet, rankAdd }, ctx) => {
-				return R.over(
-					R.lensProp(page),
-					R.pipe(
-						...[
-							R.defaultTo(DEFAULT),
-							rankSet ? () => rankSet : R.identity,
-							rankAdd ? R.add(rankAdd) : R.identity,
-							//R.tap(rank => {
-							//if (rank) {
-							//console.log(page, rank);
-							//}
-							//}),
-						].filter(Boolean),
-					),
-				);
-			},
-		),
-
-		...foundLinks.respond(async (state, { source, sinks }, ctx) => {
-			const sourceRank = state[source] || 0;
-
-			for (const sink of sinks) {
-				dispatch(
-					ctx.self,
-					updatePageRank.create({
-						page: sink,
-						rankAdd: sourceRank / sinks.length,
-					}),
-				);
-			}
-		}),
-	},
+	{},
 );
