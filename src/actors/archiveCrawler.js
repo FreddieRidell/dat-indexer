@@ -24,6 +24,7 @@ function safeJSONParse(s) {
 
 function* generatePossibleFilePaths(path) {
 	const waysToGetFilePathFromUrlPath = [
+		R.identity,
 		urlPath => PATH.join(urlPath, "index.html"),
 		urlPath =>
 			PATH.format({

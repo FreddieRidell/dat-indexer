@@ -19,7 +19,9 @@ export default defineActor(
 	function crawlerNameBuilder() {
 		return "root-crawler";
 	},
-	{},
+	{
+		distanceFromRoot: {}
+	},
 	{
 		...foundLink.respond(async (state, { sink, source }, ctx) => {
 			dispatch(
@@ -30,6 +32,7 @@ export default defineActor(
 						host: null,
 						hash: null,
 						path: sink.path,
+						distanceFromRoot: 
 					}),
 				}),
 				ctx.self,

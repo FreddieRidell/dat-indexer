@@ -20,9 +20,10 @@ export const requestDNS = createMessageDefinition(
 
 export const foundArchivePageForCrawling = createMessageDefinition(
 	"FOUND_ARCHIVE_PAGE_FOR_CRAWLING",
-	({ host, hash, path }) => ({
+	({ host, hash, path, distanceFromRoot }) => ({
 		host,
 		hash,
 		path,
+		distanceFromRoot,
 	}),
 );
